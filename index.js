@@ -74,7 +74,7 @@ class Store {
 
     sell(item, quantity) {
         if ((this.inventory.find(i => i.upc == item.upc)) === undefined) { // test if item is in inventory
-            console.log(`Error, ${this.name} does not contain ${item.name}.`);
+            console.log(`Error, ${this.name} does not sell ${item.name}.`);
             return 'bummer';
         }
         
