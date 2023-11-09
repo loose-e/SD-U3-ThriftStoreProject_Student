@@ -56,8 +56,7 @@ const salesTax = [
 //! Classes
 class Store {
     static createStore(name, city, state, balance) {
-        let tempTax = salesTax.find(function (checkState) {return checkState.state == state});
-        tempTax = tempTax.tax;
+        let tempTax = salesTax.find((checkState) => checkState.state == state).tax;
 
         return new Store(name, city, state, balance, tempTax)
     }
@@ -73,21 +72,37 @@ class Store {
         this.paidTax = 0;
     }
 
+    sell(item, quantity) {
+        if ((this.inventory.find(i => i.upc == item.upc)) === undefined) { // test if item is in inventory
+            console.log(`Error, ${this.name} does not contain ${item.name}.`);
+            return 'bummer';
+        }
+        
+        var afterQuantity = this.inventory.find(i => i.upc == item.upc).quantity - quantity;
+        var netPrice = item.purchase_price * item.markup * quantity;
+        var grossPrice = netPrice * (1 + this.salesTax);
+
+        if (afterQuantity < 0) { // check if there is enough stock
+            console.log(`Error when selling ${item.name}. ${Math.abs(afterQuantity)} less stock than required.`);
+        } else { // finally, the sale can take place
+            this.inventory.find(i => i.upc == item.upc).quantity = afterQuantity;
+            this.balance += grossPrice;
+            this.profit += netPrice;
+            this.paidTax += (Math.round(100 * (grossPrice - netPrice)) / 100);
+        }
+    }
+
     stock(item) {
         var afterBalance = this.balance - (item.purchase_price * item.quantity);
         if (afterBalance < 0) {
-            console.log(`Error when purchasing ${item.name}. $${Math.abs(afterBalance)} is required by ${this.name}`);
+            console.log(`Error when purchasing ${item.name}. $${Math.abs(afterBalance)} is required by ${this.name}.`);
             return 'bye-bye';
         }
 
-        var upcs = [];
-        this.inventory.forEach(it => upcs.push(it.upc));
-
-        if (upcs.includes(item.upc)) {
+        if ((this.inventory.find(i => i.upc == item.upc))) { 
             this.balance -= item.purchase_price * item.quantity;
             this.expenses += item.purchase_price * item.quantity;
-            this.inventory.find(i => i.upc).quantity += item.quantity;
-            // console.log(this.inventory.find(i => i.upc));
+            this.inventory.find(i => i.upc == item.upc).quantity += item.quantity;
         } else {
             this.balance -= item.purchase_price * item.quantity;
             this.expenses += item.purchase_price * item.quantity;
@@ -116,7 +131,7 @@ let sallyShop = Store.createStore('Sally\'s Shop', 'Sanford', 'Maine', 25);
 
 //! Inventory
 grandpaClothes = new Item(37, 'Grandpa\'s hand-me-downs', 'Clothing', 2, 10, 2);
-grandmaClothes = new Item(37, 'same but from gma', 'clothing', 2, 2, 1000000000);
+grandmaClothes = new Item(37, 'Clothes from ma', 'clothing', 2, 2, 1000000000);
 normalPants = new Item(2, 'Normal Pants', 'Clothing', 5, 10, 3);
 lamp = new Item(6, 'Average Lamp', 'Furniture', 1, 5, 4);
 
@@ -124,15 +139,15 @@ oldRadio = new Item(211, 'Big Old Radio', 'Electronics', 1, 500, 1.2);
 fineChina = new Item(700, 'China of China', 'Dining', 5 , 20, 1.5)
 
 grossFridge = new Item(18080808081, 'Disgusting Fridge', 'Kitchenware', 10, 1, 8);
+darkRocks = new Item(71717171717, 'Shungite', 'Junk', 10, 1, 5);
 
 //! Stocking
-
 //* First Store
 martMart.stock(grandpaClothes);
 martMart.stock(grandmaClothes);
 martMart.stock(normalPants);
 martMart.stock(lamp);
-martMart.stock(normalPants);
+martMart.stock(normalPants); // Error
 
 //* Second Store
 quickSale.stock(oldRadio);
@@ -140,16 +155,27 @@ quickSale.stock(fineChina);
 quickSale.stock(fineChina);
 
 //* Third Store
+sallyShop.stock(grossFridge);
+sallyShop.stock(darkRocks);
 
 //! Selling
-
 //* First Store
+martMart.sell(grandpaClothes, 1);
+martMart.sell(normalPants, 3);
+martMart.sell(normalPants, 2);
 
 //* Second Store
+quickSale.sell(oldRadio, 1);
+quickSale.sell(fineChina, 2);
+quickSale.sell(fineChina, 10); // Error
 
 //* Third Store
+sallyShop.sell(grossFridge, 1);
+sallyShop.sell(darkRocks, 0);
+sallyShop.sell(grandmaClothes, 1); // Error
 
 //! Testing
 // Simply console log each store to check the completed details.
 console.log(martMart);
 console.log(quickSale);
+console.log(sallyShop);
