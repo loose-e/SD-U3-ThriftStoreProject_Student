@@ -87,7 +87,7 @@ class Store {
         } else { // finally, the sale can take place
             this.inventory.find(i => i.upc == item.upc).quantity = afterQuantity;
             this.balance += grossPrice;
-            this.profit += netPrice;
+            this.profit += netPrice - (item.purchase_price * quantity);
             this.paidTax += (Math.round(100 * (grossPrice - netPrice)) / 100);
         }
     }
@@ -109,7 +109,6 @@ class Store {
             this.inventory.push(item);
         }
     }
-    
 }
 
 class Item {
